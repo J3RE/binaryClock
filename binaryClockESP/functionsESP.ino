@@ -67,8 +67,8 @@ void handleSettings()
 <font size='3'><strong>Red LEDs:</strong></font><br>\
 <table align='center'><tr><td>LDR-limit Min:</td><td><input type='number' min='0' max='1023' name='ldr_limit_min_red' value='%d'></td></tr>\
 <tr><td>LDR-limit Max:</td><td><input type='number' min='0' max='1023' name='ldr_limit_max_red' value='%d'></td></tr>\
-<tr><td>Brightness Min:</td><td><input type='number' min='0' max='255' name='min_red' value='%d'></td></tr>\
-<tr><td>Brightness Max:</td><td><input type='number' min='0' max='255' name='max_red' value='%d'></td></tr>\
+<tr><td>Brightness Min:</td><td><input type='number' min='0' max='235' name='min_red' value='%d'></td></tr>\
+<tr><td>Brightness Max:</td><td><input type='number' min='0' max='235' name='max_red' value='%d'></td></tr>\
 <tr><td></td><td><input type='submit' value='save'></td></tr></table></form>",
    settings_red.ldr_limit_min, settings_red.ldr_limit_max, settings_red.min, settings_red.max);
 
@@ -77,8 +77,8 @@ void handleSettings()
 <font size='3'><strong>White LEDs: </strong></font><br>\
 <table align='center'><tr><td>LDR-limit Min:</td><td><input type='number' min='0' max='1023' name='ldr_limit_min_white' value='%d'></td></tr>\
 <tr><td>LDR-limit Max:</td><td><input type='number' min='0' max='1023' name='ldr_limit_max_white' value='%d'></td></tr>\
-<tr><td>Brightness Min:</td><td><input type='number' min='0' max='255' name='min_white' value='%d'></td></tr>\
-<tr><td>Brightness Max:</td><td><input type='number' min='0' max='255' name='max_white' value='%d'></td></tr>\
+<tr><td>Brightness Min:</td><td><input type='number' min='0' max='235' name='min_white' value='%d'></td></tr>\
+<tr><td>Brightness Max:</td><td><input type='number' min='0' max='235' name='max_white' value='%d'></td></tr>\
 <tr><td></td><td><input type='submit' value='save'></td></tr></table></form><br>",
   settings_white.ldr_limit_min, settings_white.ldr_limit_max, settings_white.min, settings_white.max);
 
@@ -103,8 +103,8 @@ void handleTest()
 
   snprintf( temp, 650,
 "<form action='TestBrightness'>\
-<table align='center'><tr><td>Brightness red LED:</td><td><input type='number' min='0' max='255' name='now_red' size=3 value='%d'></td></tr>\
-<tr><td>Brightness white LED:</td><td><input type='number' min='0' max='255' name='now_white' size=3 value='%d'></td></tr></table>\
+<table align='center'><tr><td>Brightness red LED:</td><td><input type='number' min='0' max='235' name='now_red' size=3 value='%d'></td></tr>\
+<tr><td>Brightness white LED:</td><td><input type='number' min='0' max='235' name='now_white' size=3 value='%d'></td></tr></table>\
 <font size='2'>(changes brightness for a few sec)</font><br>\
 <input type='submit' value='update Brightness'></form><br>\
 <form action='TestLDR'>LDR: %d<br>\
@@ -127,12 +127,12 @@ void handleTestBrightness()
   b1 = server.arg("now_red").toInt();
   b2 = server.arg("now_white").toInt();
 
-  if(b1 < 256)
+  if(b1 <= 235)
   {
     brightness_now_red = b1;
     sendSerial(5);
   }
-  if(b2 < 256)
+  if(b2 <= 235)
   {
     brightness_now_white = b2;
     sendSerial(6);
@@ -302,7 +302,7 @@ void writeRedBrightness()
   temp_settings.min = server.arg("min_red").toInt();
   temp_settings.max = server.arg("max_red").toInt();
 
-  if((temp_settings.min > temp_settings.max) || (temp_settings.max > 255) || (temp_settings.ldr_limit_min > temp_settings.ldr_limit_max) || (temp_settings.ldr_limit_max > 1023))
+  if((temp_settings.min > temp_settings.max) || (temp_settings.max > 235) || (temp_settings.ldr_limit_min > temp_settings.ldr_limit_max) || (temp_settings.ldr_limit_max > 1023))
   {
     char temp[100];
     snprintf( temp, 100,  
@@ -345,7 +345,7 @@ void writeWhiteBrightness()
   temp_settings.min = server.arg("min_white").toInt();
   temp_settings.max = server.arg("max_white").toInt();
 
-  if((temp_settings.min > temp_settings.max) || (temp_settings.max > 255) || (temp_settings.ldr_limit_min > temp_settings.ldr_limit_max) || (temp_settings.ldr_limit_max > 1023))
+  if((temp_settings.min > temp_settings.max) || (temp_settings.max > 235) || (temp_settings.ldr_limit_min > temp_settings.ldr_limit_max) || (temp_settings.ldr_limit_max > 1023))
   {
     char temp[100];
     snprintf( temp, 100,  

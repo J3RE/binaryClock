@@ -46,11 +46,13 @@
 #define SQW 2
 #define SQW_INTERRUPT 0
 
-#define ESP_TIMEOUT 300000UL // 5 min
-#define SERIAL_TIMEOUT  2000U // 2 sec
-#define BUTTON_POLL_TIME  8 // 8 ms
-#define BUTTON_AP_MODE_TIME  1500U // 1.5 s
-#define FAILS_MAX 1
+#define ESP_TIMEOUT           300000UL // 5 min
+#define SERIAL_TIMEOUT        2000U    // 2 sec
+#define BUTTON_POLL_TIME      8        // 8 ms
+#define BUTTON_AP_MODE_TIME   1500U    // 1.5 s
+#define DELAY_BRIGHTNESS      10       // 10ms
+#define DELTA_BRIGHTNESS      20       // 20 brightness levels
+#define FAILS_MAX             1        // shutdown ESP8266 after the first fail
 
 struct tm
 {
@@ -84,10 +86,13 @@ uint8_t data_leds[3];
 
 uint8_t update = 1;
 uint8_t brightness_timeout = 0;
-uint8_t second_old, brightness_white;
+uint8_t brightness_red_now = 0;
+uint8_t brightness_white_now = 0;
+uint8_t  brightness_white, brightness_red, brightness_white_log, second_old, animate_seconds;
 volatile uint8_t second = 0;
 volatile uint8_t layer = 0;
-volatile uint8_t brightness_red, brightness_counter;
+volatile uint8_t brightness_counter = 0;
+volatile uint8_t brightness_red_log;
 
 uint8_t button_history = 0xFF;
 uint8_t button_pressed, led;
@@ -97,8 +102,25 @@ uint8_t use_ntp, start_in_ap_mode, serial_case, serial_byte_counter, fails, star
 uint8_t buffer[7];
 
 // timing data
-unsigned long millis_serial, millis_webserver, millis_led, millis_button, millis_button_pressed;
+unsigned long millis_serial, millis_webserver, millis_led, millis_button, millis_button_pressed, millis_animate;
 
+const uint8_t log_brightness[256] = {
+  0,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+  1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+  2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,
+  2,   2,   2,   3,   3,   3,   3,   3,   3,   3,   3,   3,   3,   3,   3,   3,
+  4,   4,   4,   4,   4,   4,   4,   4,   4,   4,   4,   5,   5,   5,   5,   5,
+  5,   5,   5,   6,   6,   6,   6,   6,   6,   6,   7,   7,   7,   7,   7,   7,
+  8,   8,   8,   8,   8,   8,   9,   9,   9,   9,  10,  10,  10,  10,  10,  11,
+ 11,  11,  11,  12,  12,  12,  12,  13,  13,  13,  14,  14,  14,  15,  15,  15,
+ 16,  16,  16,  17,  17,  17,  18,  18,  19,  19,  20,  20,  20,  21,  21,  22,
+ 22,  23,  23,  24,  24,  25,  26,  26,  27,  27,  28,  29,  29,  30,  30,  31,
+ 32,  33,  33,  34,  35,  36,  36,  37,  38,  39,  40,  41,  41,  42,  43,  44,
+ 45,  46,  47,  48,  49,  51,  52,  53,  54,  55,  56,  58,  59,  60,  62,  63,
+ 64,  66,  67,  69,  70,  72,  73,  75,  77,  78,  80,  82,  84,  86,  87,  89,
+ 91,  93,  95,  98, 100, 102, 104, 106, 109, 111, 114, 116, 119, 121, 124, 127,
+130, 132, 135, 138, 141, 144, 148, 151, 154, 158, 161, 165, 168, 172, 176, 180,
+184, 188, 192, 196, 200, 205, 209, 214, 219, 223, 228, 233, 238, 244, 249, 254};
 
 void setup()
 {
@@ -133,12 +155,25 @@ void setup()
   // set status-led as output
   pinMode(STATUS_LED, OUTPUT);
 
-  // adjust brightness
-  ldr_average = analogRead(LDR);
-  updateBrightness();
-
   // enable interrupts
   sei();
+
+  // set settings manually, in case sync with esp fails
+  settings_red.min = 50;
+  settings_red.max = 255;
+  settings_red.ldr_limit_min = 30;
+  settings_red.ldr_limit_max = 500;
+  settings_white.min = 50;
+  settings_white.max = 255;
+  settings_white.ldr_limit_min = 30;
+  settings_white.ldr_limit_max = 500;
+
+
+  // initialize ldr
+  ldr_average = analogRead(LDR);
+  updateBrightness();
+  brightness_red_log = log_brightness[brightness_red];
+  brightness_white_log = log_brightness[brightness_white];
 
   displayNumbers(0x1F, 0x3F);
   delay(500);
@@ -168,11 +203,13 @@ void loop()
     changeMode(1);
   }
 
-  if( ((second % 3) == 0) && (second != second_old))
+  if( second != second_old)
   {
     updateBrightness();
     second_old = second;
   }
+
+  animateBrightness();
 
   handleButton();
  
@@ -183,14 +220,17 @@ ISR(TIMER2_COMPA_vect)
 {
   // cycle through 256 brightness levels, then move to the next layer
   brightness_counter++;
-  if(!brightness_counter)
-    (layer == 2) ? layer = 0 : layer++;
 
   LED_PORT_ANODE &= ~MASK_LED_PORT_ANODE;
-  if (brightness_red > brightness_counter)
+  if(!brightness_counter)
   {
     LED_PORT_CATHODE &= ~MASK_LED_PORT_CATHODE;
-    LED_PORT_ANODE |= data_leds[layer];   
+    (layer == 2) ? layer = 0 : layer++;
     LED_PORT_CATHODE |= 1 << layer;
+  }
+
+  if (brightness_red_log > brightness_counter)
+  {
+    LED_PORT_ANODE |= data_leds[layer];   
   }
 }

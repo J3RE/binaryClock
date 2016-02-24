@@ -3,6 +3,40 @@ void sqwInterrupt()
   second = ++second % 60;
 }
 
+void animateBrightness()
+{ 
+  if((millis() - millis_animate) >= DELAY_BRIGHTNESS)
+  {
+    if(second % 2)
+    {
+      if(brightness_red_now < (brightness_red + DELTA_BRIGHTNESS))
+        brightness_red_now++;
+
+      if(brightness_white_now > brightness_white)
+        brightness_white_now--;
+    }
+    else
+    {
+      if(brightness_red_now > brightness_red)
+        brightness_red_now--;
+      
+      if(brightness_white_now < (brightness_white + DELTA_BRIGHTNESS))
+        brightness_white_now++;
+    }
+    brightness_red_log = log_brightness[brightness_red_now];
+
+    // if(brightness_white_now > brightness_white)
+    //   brightness_white_now--;
+    // else if(brightness_white_now < brightness_white)
+    //   brightness_white_now++;
+
+    brightness_white_log = log_brightness[brightness_white_now];
+    analogWrite(BLUE_LED, brightness_white_log);
+
+    millis_animate = millis();
+  }
+}
+
 void displayNumbers(uint8_t left, uint8_t right)
 {
   data_leds[0] = (left & 0x0F);
@@ -74,20 +108,30 @@ void updateBrightness()
   if (!brightness_timeout)
   {
     if(ldr_average > settings_red.ldr_limit_max)
+    {
       brightness_red = settings_red.max;
+    }
     else if(ldr_average < settings_red.ldr_limit_min)
+    {
       brightness_red = settings_red.min;
+    }
     else
+    {
       brightness_red = map(ldr_average, settings_red.ldr_limit_min, settings_red.ldr_limit_max, settings_red.min, settings_red.max);
+    }
 
     if(ldr_average > settings_white.ldr_limit_max)
+    {
       brightness_white = settings_white.max;
+    }
     else if(ldr_average < settings_white.ldr_limit_min)
+    {
       brightness_white = settings_white.min;
+    }
     else
+    {
       brightness_white = map(ldr_average, settings_white.ldr_limit_min, settings_white.ldr_limit_max, settings_white.min, settings_white.max);
-
-    analogWrite(BLUE_LED, brightness_white);
+    }
   }
   else
   {
@@ -103,7 +147,7 @@ void checkSerial()
     ledFails(1);
   }
 
-  if( start_reading_serial && (serial_case != 0xA0) && ((millis() - millis_serial) > SERIAL_TIMEOUT))
+  if((serial_case != 0xA0) && ((millis() - millis_serial) > SERIAL_TIMEOUT))
   {
     ledFails(1);
   }
@@ -199,7 +243,6 @@ void checkSerial()
               settings_red.ldr_limit_max = buffer[4];
               settings_red.ldr_limit_max |= buffer[5] << 8;
               serial_case = 0xA0;
-              updateBrightness();
             }
             else
             {
@@ -225,7 +268,6 @@ void checkSerial()
               settings_white.ldr_limit_max = buffer[4];
               settings_white.ldr_limit_max |= buffer[5] << 8;
               serial_case = 0xA0;
-              updateBrightness();
             }
             else
             {
@@ -245,7 +287,7 @@ void checkSerial()
             if(byte == 0xAA)
             {
               brightness_red = buffer[0];
-              brightness_timeout = 3;
+              brightness_timeout = 9;
               serial_case = 0xA0;
             }
             else
@@ -266,8 +308,7 @@ void checkSerial()
             if(byte == 0xAA)
             {
               brightness_white = buffer[0];
-              analogWrite(BLUE_LED, brightness_white);
-              brightness_timeout = 3;
+              brightness_timeout = 9;
               serial_case = 0xA0;
             }
             else
@@ -293,7 +334,6 @@ void checkSerial()
         case 0xF1:
           Serial.write(0xF1);
           brightness_timeout = 0;
-          updateBrightness();
           Serial.write(ldr_now & 0xFF);
           Serial.write((ldr_now >> 8) & 0xFF);
           Serial.write(0xAA);

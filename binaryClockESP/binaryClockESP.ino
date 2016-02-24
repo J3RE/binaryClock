@@ -87,7 +87,7 @@ border: 1px solid #DFDFDF; padding: 15px 10px 10px;}\
 a:link, a:link, a:visited { text-decoration: none; color: #4d4d4d;}\
 a:hover{color: #ccc;} a:active{ color: green;}\
 </style>\
-<title>Binary Clock</title></head><body><h2><a href='../'>BinaryClock</a></h2>";
+<title>binaryClock</title></head><body><h2><a href='../'>binaryClock</a></h2>";
 
 String close = "</body></html>";
 
@@ -185,7 +185,7 @@ void setup(void)
   use_ntp = EEPROM.read(104);
   last_successfull_ntp_tries = EEPROM.read(105);
 
-  max_wifi_tries = 15; // change to EEPROM.read(?);
+  max_wifi_tries = 25; // change to EEPROM.read(?);
 
   settings_red.min = EEPROM.read(106);
   settings_red.max = EEPROM.read(107);
