@@ -40,9 +40,6 @@
 #define STATUS_LED 7
 #define LDR A3
 
-#define STATUS_LED_PIN  PIND
-#define STATUS_LED_MASK 0x80;
-
 #define SQW 2
 #define SQW_INTERRUPT 0
 
