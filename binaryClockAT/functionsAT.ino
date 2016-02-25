@@ -26,7 +26,7 @@ void animateBrightness()
 
     brightness_red_log = log_brightness_9bit[brightness_red_now];
     brightness_white_log = log_brightness[brightness_white_now];
-    analogWrite(BLUE_LED, brightness_white_log);
+    analogWrite(WHITE_LED, brightness_white_log);
 
     millis_animate = millis();
   }

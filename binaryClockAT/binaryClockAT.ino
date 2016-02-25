@@ -36,7 +36,7 @@
 
 #define BUTTON 3
 #define PWR_ESP 4
-#define BLUE_LED 5
+#define WHITE_LED 5
 #define STATUS_LED 7
 #define LDR A3
 
