@@ -25,13 +25,13 @@ void shutdown(uint8_t error)
 void handleRoot() 
 {
   digitalWrite(LED, 0);
-  char temp[300];
+  char temp[250];
 
   sendSerial(1);
 
-  snprintf( temp, 300,
+  snprintf( temp, 250,
 "<p><a href='/Settings'>Settings</a></p>\
-<p><a href='/Test?now_red=10&now_white=150'>Test</a></p>\
+<p><a href='/Test>Test</a></p>\
 <p><a href='/%s'>update Time (%s)</a></p>\
 <p><a href='/Shutdown'>Shutdown</a></p>\
 <p><a href='/Info'>Info</a></p>\

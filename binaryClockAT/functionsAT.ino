@@ -9,8 +9,8 @@ void animateBrightness()
   {
     if(second % 2)
     {
-      if(brightness_red_now < (brightness_red + DELTA_BRIGHTNESS))
-        brightness_red_now++;
+      if(brightness_red_now < (brightness_red + (DELTA_BRIGHTNESS << 1)))
+        brightness_red_now += 2;
 
       if(brightness_white_now > brightness_white)
         brightness_white_now--;
@@ -18,18 +18,13 @@ void animateBrightness()
     else
     {
       if(brightness_red_now > brightness_red)
-        brightness_red_now--;
+        brightness_red_now -= 2;
       
       if(brightness_white_now < (brightness_white + DELTA_BRIGHTNESS))
         brightness_white_now++;
     }
-    brightness_red_log = log_brightness[brightness_red_now];
 
-    // if(brightness_white_now > brightness_white)
-    //   brightness_white_now--;
-    // else if(brightness_white_now < brightness_white)
-    //   brightness_white_now++;
-
+    brightness_red_log = log_brightness_9bit[brightness_red_now];
     brightness_white_log = log_brightness[brightness_white_now];
     analogWrite(BLUE_LED, brightness_white_log);
 
@@ -109,15 +104,15 @@ void updateBrightness()
   {
     if(ldr_average > settings_red.ldr_limit_max)
     {
-      brightness_red = settings_red.max;
+      brightness_red = settings_red.max << 1;
     }
     else if(ldr_average < settings_red.ldr_limit_min)
     {
-      brightness_red = settings_red.min;
+      brightness_red = settings_red.min << 1;
     }
     else
     {
-      brightness_red = map(ldr_average, settings_red.ldr_limit_min, settings_red.ldr_limit_max, settings_red.min, settings_red.max);
+      brightness_red = map(ldr_average, settings_red.ldr_limit_min, settings_red.ldr_limit_max, settings_red.min, settings_red.max) << 1;
     }
 
     if(ldr_average > settings_white.ldr_limit_max)
@@ -286,7 +281,7 @@ void checkSerial()
           {
             if(byte == 0xAA)
             {
-              brightness_red = buffer[0];
+              brightness_red = buffer[0] << 1;
               brightness_timeout = 9;
               serial_case = 0xA0;
             }
