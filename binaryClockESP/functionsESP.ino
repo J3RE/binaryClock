@@ -31,7 +31,7 @@ void handleRoot()
 
   snprintf( temp, 250,
 "<p><a href='/Settings'>Settings</a></p>\
-<p><a href='/Test>Test</a></p>\
+<p><a href='/Test'>Test</a></p>\
 <p><a href='/%s'>update Time (%s)</a></p>\
 <p><a href='/Shutdown'>Shutdown</a></p>\
 <p><a href='/Info'>Info</a></p>\
@@ -573,8 +573,11 @@ void getNTP(void)
             end_day--;
           }
 
-          if(((timeinfo.tm_mon > 2) && (timeinfo.tm_mon < 9)) || ((timeinfo.tm_mon == 2) && (timeinfo.tm_mday >= start_day) && (timeinfo.tm_hour >= 2))\
-             || ((timeinfo.tm_mon == 9) && (timeinfo.tm_mday <= end_day) && (timeinfo.tm_hour > 2)))
+          if( ((timeinfo.tm_mon > 2) && (timeinfo.tm_mon < 9))\
+              || ((timeinfo.tm_mon == 2) && (timeinfo.tm_mday > start_day))\
+              || ((timeinfo.tm_mon == 2) && (timeinfo.tm_mday == start_day) && (timeinfo.tm_hour >= 2))\
+              || ((timeinfo.tm_mon == 9) && (timeinfo.tm_mday < end_day))\
+              || ((timeinfo.tm_mon == 9) && (timeinfo.tm_mday == end_day) && (timeinfo.tm_hour < 2)) )
           {
             timeinfo.tm_isdst = 1;
             now += 3600;
